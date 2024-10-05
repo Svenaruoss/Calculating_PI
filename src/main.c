@@ -1,23 +1,36 @@
 /********************************************************************************************* */
-//    Eduboard2 ESP32-S3 Template with BSP
-//    Author: Martin Burger
+//    PI Calculator
+//    Author: Svenja Ruoss
 //    Juventus Technikerschule
 //    Version: 1.0.0
 //    
-//    This is the ideal starting point for a new Project. BSP for most of the Eduboard2
-//    Hardware is included under components/eduboard2.
-//    Hardware support can be activated/deactivated in components/eduboard2/eduboard2_config.h
+//   
+//    
+//   
 /********************************************************************************************* */
 #include "eduboard2.h"
 #include "memon.h"
 
 #include "math.h"
 
-#define TAG "TEMPLATE"
+#define TAG "PI_Calculator"
+
+#define SteuerTask          "SteuerTask"
+#define LeibnizTask         "LeibnizTask"   
+#define OtherTask           "OtherTask"
 
 #define UPDATETIME_MS 100
 
-//----------------- Steur-Task ------------------------------------------------------------------------
+//----------------- Global Variable --------------------------------------------------------------------
+unsigned char LeibnizPi = 0;
+unsigned char OtherPI   = 0;
+
+//----------------- EventBits --------------------------------------------------------------------------
+EventGroupHandle_t SwitchEventGroup = NULL;
+EventGroupHandle_t StartEventGroup = NULL;
+EventGroupHandle_t EndEventGroup = NULL;
+EventGroupHandle_t SetBackEventGroup = NULL;
+//----------------- Steuer-Task ------------------------------------------------------------------------
 
 void Steuer_Task(void* param){
 
@@ -55,22 +68,22 @@ void app_main()
     eduboard2_init();
     
     //Create templateTask
-    xTaskCreate(Steuer_Task,    //Subroutine
-                "ui",                   //Name
+    xTaskCreate(Steuer_Task,            //Subroutine
+                "Steuerung",            //Name
                 2*2048,                 //Stacksize
                 NULL,                   //Parameters
                 9,                      //Priority
                 NULL);                  //Taskhandle
 
-    xTaskCreate(Leibniz_Calculator,    //Subroutine
-                "ui",                   //Name
+    xTaskCreate(Leibniz_Calculator,     //Subroutine
+                "Leibniz-Rechner",      //Name
                 2*2048,                 //Stacksize
                 NULL,                   //Parameters
                 1,                      //Priority
                 NULL);                  //Taskhandle
 
-    xTaskCreate(other_Calculator,    //Subroutine
-                "ui",                   //Name
+    xTaskCreate(other_Calculator,       //Subroutine
+                "anderer-Rechner",      //Name
                 2*2048,                 //Stacksize
                 NULL,                   //Parameters
                 1,                      //Priority
