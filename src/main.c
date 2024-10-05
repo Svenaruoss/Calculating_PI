@@ -17,7 +17,25 @@
 
 #define UPDATETIME_MS 100
 
-void templateTask(void* param) {
+//----------------- Steur-Task ------------------------------------------------------------------------
+
+void Steuer_Task(void* param){
+
+}
+//----------------- Leibniz-Calclator ------------------------------------------------------------------------
+
+void Leibniz_Calculator(void* param){
+
+}
+
+//----------------- ""-Calclator ------------------------------------------------------------------------
+void other_Calculator(void* param){
+
+}
+
+//----------------- Task's ------------------------------------------------------------------------
+
+/*void templateTask(void* param) {
     //Init stuff here
 
     for(;;) {
@@ -29,7 +47,7 @@ void templateTask(void* param) {
         // delay
         vTaskDelay(UPDATETIME_MS/portTICK_PERIOD_MS);
     }
-}
+}*/
 
 void app_main()
 {
@@ -37,14 +55,24 @@ void app_main()
     eduboard2_init();
     
     //Create templateTask
-    xTaskCreate(templateTask,   //Subroutine
-                "testTask",     //Name
-                2*2048,         //Stacksize
-                NULL,           //Parameters
-                10,             //Priority
-                NULL);          //Taskhandle
-    for(;;) {
-        vTaskDelay(2000/portTICK_PERIOD_MS);
-        ESP_LOGI(TAG, "Hello Eduboard");
-    }
+    xTaskCreate(Steuer_Task,    //Subroutine
+                "ui",                   //Name
+                2*2048,                 //Stacksize
+                NULL,                   //Parameters
+                9,                      //Priority
+                NULL);                  //Taskhandle
+
+    xTaskCreate(Leibniz_Calculator,    //Subroutine
+                "ui",                   //Name
+                2*2048,                 //Stacksize
+                NULL,                   //Parameters
+                1,                      //Priority
+                NULL);                  //Taskhandle
+
+    xTaskCreate(other_Calculator,    //Subroutine
+                "ui",                   //Name
+                2*2048,                 //Stacksize
+                NULL,                   //Parameters
+                1,                      //Priority
+                NULL);                  //Taskhandle
 }
