@@ -26,8 +26,9 @@
 #define ButtonON
 
 //----------------- Global Variable --------------------------------------------------------------------
-double LeibnizPi        = 0.0;
-double NilakanthaPI     = 0.0;
+double LeibnizPi                = 0.0;
+double NilakanthaPI             = 0.0;
+unsigned char ChangeVariable    = 0;    //0 für Leibniz, 1 für Nilakantha
 
 //----------------- EventBits --------------------------------------------------------------------------
 #define BIT_change      1 << 0
@@ -40,7 +41,8 @@ EventGroupHandle_t xControlleventgroup;
 
 void Steuer_Task(void* param){
 
-    TickType_t xStartTime = xTaskGetTickCount();
+  /*  TickType_t xStartTime = xTaskGetTickCount();
+     lcdFillScreen(BLACK);
 
     if(button_get_state(SW0, true) == SHORT_PRESSED){
         xEventGroupSetBits(xControlleventgroup, BIT_Start);
@@ -63,7 +65,8 @@ void Steuer_Task(void* param){
         }
     }
 
-    if (fabs(LeibnizPi * 4 - 3.14159) < 0.00001) {                                              //Zeitmessfunktion
+//----------------- Zeitmessung -------------------------------------------------------------------------------
+    if (fabs(LeibnizPi * 4 - 3.14159) < 0.00001) {                                              
         TickType_t xEndTime = xTaskGetTickCount();
         printf("Zeit bis 5 Stellen: %ld ms\n", (xEndTime - xStartTime) * portTICK_PERIOD_MS);
     }
@@ -72,47 +75,52 @@ void Steuer_Task(void* param){
         TickType_t xEndTime = xTaskGetTickCount();
         printf("Zeit bis 5 Stellen: %ld ms\n", (xEndTime - xStartTime) * portTICK_PERIOD_MS);
     }
-    vTaskDelay(500/portTICK_PERIOD_MS);
+    vTaskDelay(500/portTICK_PERIOD_MS);*/
 }
-//----------------- Leibniz-Calclator ------------------------------------------------------------------------
+//----------------- Leibniz-Calcalator ------------------------------------------------------------------------
 
 void Leibniz_Calculator(void* param){
 
-    int k = 0;
-    while (1) {
-        EventBits_t uxBits = xEventGroupWaitBits(xControlleventgroup, BIT_Start | BIT_End | BIT_SetBack, pdTRUE, pdFALSE, portMAX_DELAY);
+    if(ChangeVariable == 0){
+        int k = 0;
+        while (1) {
+            EventBits_t uxBits = xEventGroupWaitBits(xControlleventgroup, BIT_Start | BIT_End | BIT_SetBack, pdTRUE, pdFALSE, portMAX_DELAY);
 
-        if (uxBits & BIT_Start) {
-            LeibnizPi += (k % 2 == 0 ? 1.0 : -1.0) / (2 * k + 1);
-            k++;
-            printf("Leibniz π: %.10f\n", LeibnizPi * 4);
-            vTaskDelay(pdMS_TO_TICKS(500));
-        } 
-        else if (uxBits & BIT_End) {
-            vTaskSuspend(NULL);
-        } else if (uxBits & BIT_SetBack) {
-            LeibnizPi = 0.0;
-            k = 0;
+            if (uxBits & BIT_Start) {
+                LeibnizPi += (k % 2 == 0 ? 1.0 : -1.0) / (2 * k + 1);
+                k++;
+                printf("Leibniz π: %.10f\n", LeibnizPi * 4);
+                vTaskDelay(pdMS_TO_TICKS(500));
+                //ESP_LOGI(TAG, "%lf", LeibnizPi);
+            } 
+            else if (uxBits & BIT_End) {
+                vTaskSuspend(NULL);
+            } else if (uxBits & BIT_SetBack) {
+                LeibnizPi = 0.0;
+                k = 0;
+            }
         }
     }
 }
 
-//----------------- ""-Calclator ------------------------------------------------------------------------
+//----------------- Nilakantha-Calclator ----------------------------------------------------------------------
 void Nilakantha_Calculator(void* param){
 
-    int k = 1;
-    while (1) {
-        EventBits_t uxBits = xEventGroupWaitBits(xControlleventgroup, BIT_Start | BIT_End | BIT_SetBack, pdTRUE, pdFALSE, portMAX_DELAY);
-        if (uxBits & BIT_Start) {
-            NilakanthaPI += (k % 2 == 0 ? -4.0 : 4.0) / ((2 * k) * (2 * k + 1) * (2 * k + 2));
-            k++;
-            printf("Nilakantha π: %.10f\n", NilakanthaPI);
-            vTaskDelay(pdMS_TO_TICKS(500));
-        } else if (uxBits & BIT_End) {
-            vTaskSuspend(NULL);
-        } else if (uxBits & BIT_SetBack) {
-            NilakanthaPI = 3.0;
-            k = 1;
+    if(ChangeVariable == 1){
+        int k = 1;
+        while (1) {
+            EventBits_t uxBits = xEventGroupWaitBits(xControlleventgroup, BIT_Start | BIT_End | BIT_SetBack, pdTRUE, pdFALSE, portMAX_DELAY);
+            if (uxBits & BIT_Start) {
+                NilakanthaPI += (k % 2 == 0 ? -4.0 : 4.0) / ((2 * k) * (2 * k + 1) * (2 * k + 2));
+                k++;
+                printf("Nilakantha π: %.10f\n", NilakanthaPI);
+                vTaskDelay(pdMS_TO_TICKS(500));
+            } else if (uxBits & BIT_End) {
+                vTaskSuspend(NULL);
+            } else if (uxBits & BIT_SetBack) {
+                NilakanthaPI = 3.0;
+                k = 1;
+            }
         }
     }
 }
@@ -135,6 +143,8 @@ void Nilakantha_Calculator(void* param){
 
 void app_main()
 {
+
+    lcdFillScreen(BLACK);
     xControlleventgroup = xEventGroupCreate();
     //Initialize Eduboard2 BSP
     eduboard2_init();
@@ -155,7 +165,7 @@ void app_main()
                 NULL);                  //Taskhandle
 
     xTaskCreate(Nilakantha_Calculator,  //Subroutine
-                "anderer-Rechner",      //Name
+                "Nilakantha-Rechner",   //Name
                 2*2048,                 //Stacksize
                 NULL,                   //Parameters
                 1,                      //Priority
