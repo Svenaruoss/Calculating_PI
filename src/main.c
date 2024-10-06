@@ -8,16 +8,16 @@
 //    
 //   
 /********************************************************************************************* */
-#include "eduboard2.h"
-#include "memon.h"
+#include                        "eduboard2.h"
+#include                        "memon.h"
 
-#include "math.h"
+#include                        "math.h"
 
-#define TAG "PI_Calculator"
+#define TAG                     "PI_Calculator"
 
-#define SteuerTask          "SteuerTask"
-#define LeibnizTask         "LeibnizTask"   
-#define OtherTask           "OtherTask"
+#define SteuerTask              "SteuerTask"
+#define LeibnizTask             "LeibnizTask"   
+#define NilakanthaTask          "OtherTask"
 
 #define UPDATETIME_MS 100
 
@@ -26,15 +26,10 @@
 #define ButtonON
 
 //----------------- Global Variable --------------------------------------------------------------------
-unsigned char LeibnizPi = 0;
-unsigned char OtherPI   = 0;
+double LeibnizPi        = 0.0;
+double NilakanthaPI     = 0.0;
 
 //----------------- EventBits --------------------------------------------------------------------------
-/*EventGroupHandle_t changeEventGroup     = NULL;
-EventGroupHandle_t StartEventGroup      = NULL;
-EventGroupHandle_t EndEventGroup        = NULL;
-EventGroupHandle_t SetBackEventGroup    = NULL;*/
-
 #define BIT_change      1 << 0
 #define BIT_Start       1 << 1
 #define BIT_End         1 << 2
@@ -45,7 +40,6 @@ EventGroupHandle_t xControlleventgroup;
 
 void Steuer_Task(void* param){
 
-xControlleventgroup = xEventGroupCreate();
         if(button_get_state(SW0, true) == SHORT_PRESSED){
             xEventGroupSetBits(xControlleventgroup, BIT_Start);
             xEventGroupClearBits(xControlleventgroup, BIT_End);
@@ -71,31 +65,44 @@ xControlleventgroup = xEventGroupCreate();
 //----------------- Leibniz-Calclator ------------------------------------------------------------------------
 
 void Leibniz_Calculator(void* param){
-    double pi = 0.0;
+
     int k = 0;
     while (1) {
         EventBits_t uxBits = xEventGroupWaitBits(xControlleventgroup, BIT_Start | BIT_End | BIT_SetBack, pdTRUE, pdFALSE, portMAX_DELAY);
 
         if (uxBits & BIT_Start) {
-            pi += (k % 2 == 0 ? 1.0 : -1.0) / (2 * k + 1);
+            LeibnizPi += (k % 2 == 0 ? 1.0 : -1.0) / (2 * k + 1);
             k++;
-            printf("Leibniz π: %.10f\n", pi * 4);
+            printf("Leibniz π: %.10f\n", LeibnizPi * 4);
             vTaskDelay(pdMS_TO_TICKS(500));
         } 
         else if (uxBits & BIT_End) {
             vTaskSuspend(NULL);
         } else if (uxBits & BIT_SetBack) {
-            pi = 0.0;
+            LeibnizPi = 0.0;
             k = 0;
         }
     }
 }
 
 //----------------- ""-Calclator ------------------------------------------------------------------------
-void other_Calculator(void* param){
+void Nilakantha_Calculator(void* param){
 
-
-    vTaskDelay(300/portTICK_PERIOD_MS);
+    int k = 1;
+    while (1) {
+        EventBits_t uxBits = xEventGroupWaitBits(xControlleventgroup, BIT_Start | BIT_End | BIT_SetBack, pdTRUE, pdFALSE, portMAX_DELAY);
+        if (uxBits & BIT_Start) {
+            NilakanthaPI += (k % 2 == 0 ? -4.0 : 4.0) / ((2 * k) * (2 * k + 1) * (2 * k + 2));
+            k++;
+            printf("Nilakantha π: %.10f\n", NilakanthaPI);
+            vTaskDelay(pdMS_TO_TICKS(500));
+        } else if (uxBits & BIT_End) {
+            vTaskSuspend(NULL);
+        } else if (uxBits & BIT_SetBack) {
+            NilakanthaPI = 3.0;
+            k = 1;
+        }
+    }
 }
 
 //----------------- Task's ------------------------------------------------------------------------
@@ -116,6 +123,7 @@ void other_Calculator(void* param){
 
 void app_main()
 {
+    xControlleventgroup = xEventGroupCreate();
     //Initialize Eduboard2 BSP
     eduboard2_init();
     
@@ -134,7 +142,7 @@ void app_main()
                 1,                      //Priority
                 NULL);                  //Taskhandle
 
-    xTaskCreate(other_Calculator,       //Subroutine
+    xTaskCreate(Nilakantha_Calculator,  //Subroutine
                 "anderer-Rechner",      //Name
                 2*2048,                 //Stacksize
                 NULL,                   //Parameters
