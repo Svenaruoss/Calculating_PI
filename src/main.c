@@ -40,26 +40,38 @@ EventGroupHandle_t xControlleventgroup;
 
 void Steuer_Task(void* param){
 
-        if(button_get_state(SW0, true) == SHORT_PRESSED){
-            xEventGroupSetBits(xControlleventgroup, BIT_Start);
-            xEventGroupClearBits(xControlleventgroup, BIT_End);
-        }
+    TickType_t xStartTime = xTaskGetTickCount();
 
-        if(button_get_state(SW1, true) == SHORT_PRESSED){
-            xEventGroupSetBits(xControlleventgroup, BIT_End);
-            xEventGroupClearBits(xControlleventgroup, BIT_Start);
+    if(button_get_state(SW0, true) == SHORT_PRESSED){
+        xEventGroupSetBits(xControlleventgroup, BIT_Start);
+        xEventGroupClearBits(xControlleventgroup, BIT_End);
+    }
+
+    if(button_get_state(SW1, true) == SHORT_PRESSED){
+        xEventGroupSetBits(xControlleventgroup, BIT_End);
+        xEventGroupClearBits(xControlleventgroup, BIT_Start);
+    }
+    if(button_get_state(SW2, true) == SHORT_PRESSED){
+        xEventGroupSetBits(xControlleventgroup, BIT_SetBack);
+    }
+    if(button_get_state(SW3, true) == SHORT_PRESSED){
+        if(xEventGroupGetBits(xControlleventgroup) & BIT_change) {
+            xEventGroupClearBits(xControlleventgroup, BIT_change);
         }
-        if(button_get_state(SW2, true) == SHORT_PRESSED){
-            xEventGroupSetBits(xControlleventgroup, BIT_SetBack);
+        if(xEventGroupGetBits(xControlleventgroup) & !BIT_change) {
+            xEventGroupSetBits(xControlleventgroup, BIT_change);
         }
-        if(button_get_state(SW3, true) == SHORT_PRESSED){
-            if(xEventGroupGetBits(xControlleventgroup) & BIT_change) {
-                xEventGroupClearBits(xControlleventgroup, BIT_change);
-            }
-            if(xEventGroupGetBits(xControlleventgroup) & !BIT_change) {
-                xEventGroupSetBits(xControlleventgroup, BIT_change);
-            }
-        }
+    }
+
+    if (fabs(LeibnizPi * 4 - 3.14159) < 0.00001) {                                              //Zeitmessfunktion
+        TickType_t xEndTime = xTaskGetTickCount();
+        printf("Zeit bis 5 Stellen: %ld ms\n", (xEndTime - xStartTime) * portTICK_PERIOD_MS);
+    }
+
+    if (fabs(NilakanthaPI * 4 - 3.14159) < 0.00001) {
+        TickType_t xEndTime = xTaskGetTickCount();
+        printf("Zeit bis 5 Stellen: %ld ms\n", (xEndTime - xStartTime) * portTICK_PERIOD_MS);
+    }
     vTaskDelay(500/portTICK_PERIOD_MS);
 }
 //----------------- Leibniz-Calclator ------------------------------------------------------------------------
